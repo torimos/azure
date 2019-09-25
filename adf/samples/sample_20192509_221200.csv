@@ -1,0 +1,4 @@
+device_id,model,serial_num,source
+MA-00001,rpi,A00Z-0001-01,aaa
+ZA-00001,rpi,A00Z-0001-02,bbb
+MA-00003,rpi,A00Z-0001-03,aaa

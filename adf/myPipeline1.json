@@ -1,0 +1,158 @@
+{
+    "name": "pipeline1",
+    "properties": {
+        "activities": [
+            {
+                "name": "Get Metadata1",
+                "description": "",
+                "type": "GetMetadata",
+                "dependsOn": [],
+                "policy": {
+                    "timeout": "7.00:00:00",
+                    "retry": 0,
+                    "retryIntervalInSeconds": 30,
+                    "secureOutput": false,
+                    "secureInput": false
+                },
+                "userProperties": [],
+                "typeProperties": {
+                    "dataset": {
+                        "referenceName": "SampleSource",
+                        "type": "DatasetReference"
+                    },
+                    "fieldList": [
+                        "childItems"
+                    ],
+                    "storeSettings": {
+                        "type": "AzureBlobStorageReadSettings",
+                        "recursive": true,
+                        "modifiedDatetimeStart": {
+                            "value": "@{addhours(pipeline().TriggerTime, -12)}",
+                            "type": "Expression"
+                        },
+                        "modifiedDatetimeEnd": {
+                            "value": "@{pipeline().TriggerTime}",
+                            "type": "Expression"
+                        }
+                    },
+                    "formatSettings": {
+                        "type": "DelimitedTextReadSettings"
+                    }
+                }
+            },
+            {
+                "name": "ForEach1",
+                "type": "ForEach",
+                "dependsOn": [
+                    {
+                        "activity": "Get Metadata1",
+                        "dependencyConditions": [
+                            "Succeeded"
+                        ]
+                    }
+                ],
+                "userProperties": [],
+                "typeProperties": {
+                    "items": {
+                        "value": "@activity('Get Metadata1').output.childItems",
+                        "type": "Expression"
+                    },
+                    "isSequential": true,
+                    "activities": [
+                        {
+                            "name": "Copy Data1",
+                            "type": "Copy",
+                            "dependsOn": [],
+                            "policy": {
+                                "timeout": "7.00:00:00",
+                                "retry": 0,
+                                "retryIntervalInSeconds": 30,
+                                "secureOutput": false,
+                                "secureInput": false
+                            },
+                            "userProperties": [],
+                            "typeProperties": {
+                                "source": {
+                                    "type": "DelimitedTextSource",
+                                    "storeSettings": {
+                                        "type": "AzureBlobStorageReadSettings",
+                                        "recursive": true,
+                                        "wildcardFileName": {
+                                            "value": "@{item().name}",
+                                            "type": "Expression"
+                                        },
+                                        "enablePartitionDiscovery": false
+                                    },
+                                    "formatSettings": {
+                                        "type": "DelimitedTextReadSettings"
+                                    }
+                                },
+                                "sink": {
+                                    "type": "DocumentDbCollectionSink",
+                                    "nestingSeparator": ".",
+                                    "writeBehavior": "upsert",
+                                    "disableMetricsCollection": false
+                                },
+                                "enableStaging": false,
+                                "translator": {
+                                    "type": "TabularTranslator",
+                                    "mappings": [
+                                        {
+                                            "source": {
+                                                "name": "device_id",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "id"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "model",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "model"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "serial_num",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "serialNo"
+                                            }
+                                        },
+                                        {
+                                            "source": {
+                                                "name": "source",
+                                                "type": "String"
+                                            },
+                                            "sink": {
+                                                "name": "src"
+                                            }
+                                        }
+                                    ]
+                                }
+                            },
+                            "inputs": [
+                                {
+                                    "referenceName": "SampleSource",
+                                    "type": "DatasetReference"
+                                }
+                            ],
+                            "outputs": [
+                                {
+                                    "referenceName": "DocumentDbCollection1",
+                                    "type": "DatasetReference"
+                                }
+                            ]
+                        }
+                    ]
+                }
+            }
+        ],
+        "annotations": []
+    }
+}
